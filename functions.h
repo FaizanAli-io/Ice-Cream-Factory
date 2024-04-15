@@ -8,6 +8,8 @@ using namespace std;
 #ifndef ICECREAMFACTORY
 #define ICECREAMFACTORY
 
+pthread_mutex_t lock;
+
 struct IceCreamOrder
 {
     int orderID;
@@ -16,14 +18,16 @@ struct IceCreamOrder
     string topping;
     static int counter;
 
-    IceCreamOrder(string _cupSize = "", string _flavour = "", string _topping = "")
+    IceCreamOrder(string _cupSize = "none", string _flavour = "none", string _topping = "none")
         : cupSize(_cupSize), flavour(_flavour), topping(_topping) { orderID = counter++; }
 
     void display()
     {
-        cout << "Cup Size: " << cupSize << endl
+        cout << "(Order) Order ID: " << orderID << endl
+             << "Cup Size: " << cupSize << endl
              << "Flavour: " << flavour << endl
-             << "Topping: " << topping << endl;
+             << "Topping: " << topping << endl
+             << endl;
     }
 };
 
@@ -41,167 +45,196 @@ struct IceCream
 
     void display()
     {
-        cout << "Order ID = " << order->orderID << endl;
-        if (isPrepared)
-        {
-            cout << "Cup Size: " << cupSize << endl
-                 << "Flavour: " << flavour << endl
-                 << "Topping: " << topping << endl;
-        }
-        else
-        {
-            cout << "Not prepared yet." << endl;
-            order->display();
-        }
+        cout << "(Ice Cream) Order ID = " << order->orderID << endl
+             << "Cup Size: " << cupSize << endl
+             << "Flavour: " << flavour << endl
+             << "Topping: " << topping << endl
+             << endl;
     }
 };
 
-class IceCreamFactory
+struct IceCreamFactory
 {
-    vector<IceCreamOrder> orders;
-    vector<IceCream *> iceCreams;
+    queue<IceCreamOrder> waitingQueue;
     queue<IceCream *> cupSizeQueue;
     queue<IceCream *> flavourQueue;
     queue<IceCream *> toppingQueue;
+    queue<IceCream *> readyQueue;
 
-    void *setCupSize()
+    void display()
     {
-        while (true)
-        {
-            while (cupSizeQueue.empty())
-                ;
-
-            IceCream *iceCream = cupSizeQueue.front();
-            iceCream->cupSize = iceCream->order->cupSize;
-
-            flavourQueue.push(iceCream);
-            cupSizeQueue.pop();
-
-            int time = rand() % 5;
-            sleep(time);
-
-            cout << "Order for a " + iceCream->cupSize + " size cup has been set in "
-                 << time << " seconds." << endl;
-        }
-
-        return NULL;
-    }
-
-    void *setFlavour()
-    {
-        while (true)
-        {
-            while (flavourQueue.empty())
-                ;
-
-            IceCream *iceCream = flavourQueue.front();
-            iceCream->flavour = iceCream->order->flavour;
-
-            toppingQueue.push(iceCream);
-            flavourQueue.pop();
-
-            int time = rand() % 5;
-            sleep(time);
-
-            cout << "Order for a " + iceCream->flavour + " flavoured cup has been set in "
-                 << time << " seconds." << endl;
-        }
-
-        return NULL;
-    }
-
-    void *setTopping()
-    {
-        while (true)
-        {
-            while (toppingQueue.empty())
-                ;
-
-            IceCream *iceCream = toppingQueue.front();
-            iceCream->topping = iceCream->order->topping;
-
-            iceCreams.push_back(iceCream);
-            toppingQueue.pop();
-
-            int time = rand() % 5;
-            sleep(time);
-
-            cout << "Order for a " + iceCream->topping + " topping cup has been set in "
-                 << time << " seconds." << endl;
-        }
-
-        return NULL;
-    }
-
-    static void *callCupSize(void *context)
-    {
-        return static_cast<IceCreamFactory *>(context)->setCupSize();
-    }
-
-    static void *callFlavour(void *context)
-    {
-        return static_cast<IceCreamFactory *>(context)->setFlavour();
-    }
-
-    static void *callTopping(void *context)
-    {
-        return static_cast<IceCreamFactory *>(context)->setTopping();
-    }
-
-    void startOrders()
-    {
-        for (int i = 0; i < orders.size(); ++i)
-        {
-            cupSizeQueue.push(new IceCream(&orders[i]));
-            cout << "Order taken, ID = " << orders[i].orderID << endl;
-        }
-    }
-
-    void deliverOrders()
-    {
-        for (int i = 0; i < iceCreams.size(); ++i)
-            iceCreams[i]->display();
-    }
-
-public:
-    void run(vector<IceCreamOrder> &orders)
-    {
-        cout << "Ice Cream Factory is running..." << endl;
-
-        int n = 1;
-
-        this->orders = orders;
-
-        this->startOrders();
-
-        pthread_t cupSizeThread[n];
-        pthread_t flavourThread[n];
-        pthread_t toppingThread[n];
-
-        for (int i = 0; i < n; i++)
-        {
-            pthread_create(cupSizeThread + i, NULL, callCupSize, this);
-            // pthread_create(flavourThread + i, NULL, callFlavour, this);
-            // pthread_create(toppingThread + i, NULL, callTopping, this);
-        }
-
-        cout << "Here" << endl;
-
-        for (int i = 0; i < n; i++)
-        {
-            pthread_join(cupSizeThread[i], NULL);
-            pthread_join(flavourThread[i], NULL);
-            pthread_join(toppingThread[i], NULL);
-        }
-
-        cout << "Here x2" << endl;
-
-        this->deliverOrders();
-
-        cout << "Here x3" << endl;
-
-        cout << "Ice Cream Factory is finished running." << endl;
+        cout << waitingQueue.size() << ", "
+             << cupSizeQueue.size() << ", "
+             << flavourQueue.size() << ", "
+             << toppingQueue.size() << ", "
+             << readyQueue.size() << endl;
     }
 };
+
+int delay = 1;
+const int n = 1;
+IceCreamFactory factory;
+
+void *takeOrder(void *arg)
+{
+    while (true)
+    {
+        while (factory.waitingQueue.empty())
+            ;
+
+        sleep(delay);
+
+        pthread_mutex_lock(&lock);
+
+        IceCreamOrder order = factory.waitingQueue.front();
+        factory.waitingQueue.pop();
+
+        factory.cupSizeQueue.push(new IceCream(&order));
+
+        pthread_mutex_unlock(&lock);
+
+        // factory.display();
+        order.display();
+    }
+
+    return NULL;
+}
+
+void *setCupSize(void *arg)
+{
+    while (true)
+    {
+        while (factory.cupSizeQueue.empty())
+            ;
+
+        sleep(delay);
+
+        pthread_mutex_lock(&lock);
+
+        IceCream *iceCream = factory.cupSizeQueue.front();
+        factory.cupSizeQueue.pop();
+
+        iceCream->cupSize = iceCream->order->cupSize;
+        factory.flavourQueue.push(iceCream);
+
+        pthread_mutex_unlock(&lock);
+
+        // factory.display();
+        iceCream->display();
+    }
+
+    return NULL;
+}
+
+void *setFlavour(void *arg)
+{
+    while (true)
+    {
+        while (factory.flavourQueue.empty())
+            ;
+
+        sleep(delay);
+
+        pthread_mutex_lock(&lock);
+
+        IceCream *iceCream = factory.flavourQueue.front();
+        factory.flavourQueue.pop();
+
+        iceCream->flavour = iceCream->order->flavour;
+        factory.toppingQueue.push(iceCream);
+
+        pthread_mutex_unlock(&lock);
+
+        // factory.display();
+        iceCream->display();
+    }
+
+    return NULL;
+}
+
+void *setTopping(void *arg)
+{
+    while (true)
+    {
+        while (factory.toppingQueue.empty())
+            ;
+
+        sleep(delay);
+
+        pthread_mutex_lock(&lock);
+
+        IceCream *iceCream = factory.toppingQueue.front();
+        factory.toppingQueue.pop();
+
+        iceCream->topping = iceCream->order->topping;
+        factory.readyQueue.push(iceCream);
+
+        pthread_mutex_unlock(&lock);
+
+        // factory.display();
+        iceCream->display();
+    }
+
+    return NULL;
+}
+
+void *showOrder(void *arg)
+{
+    while (true)
+    {
+        while (factory.readyQueue.empty())
+            ;
+
+        sleep(delay);
+
+        IceCream *iceCream = factory.readyQueue.front();
+        factory.readyQueue.pop();
+
+        cout << "[FINISHED]" << endl;
+        iceCream->display();
+    }
+
+    return NULL;
+}
+
+void run(vector<IceCreamOrder> &orders)
+{
+    cout << "Ice Cream Factory has started running..." << endl;
+
+    for (int i = 0; i < orders.size(); i++)
+        factory.waitingQueue.push(orders[i]);
+
+    factory.display();
+
+    pthread_t takeOrderThread[n];
+    pthread_t cupSizeThread[n];
+    pthread_t flavourThread[n];
+    pthread_t toppingThread[n];
+    pthread_t showOrderThread[n];
+
+    pthread_mutex_init(&lock, NULL);
+
+    for (int i = 0; i < n; i++)
+    {
+        pthread_create(takeOrderThread + i, NULL, takeOrder, NULL);
+        pthread_create(cupSizeThread + i, NULL, setCupSize, NULL);
+        pthread_create(flavourThread + i, NULL, setFlavour, NULL);
+        pthread_create(toppingThread + i, NULL, setTopping, NULL);
+        pthread_create(showOrderThread + i, NULL, showOrder, NULL);
+    }
+
+    for (int i = 0; i < n; i++)
+    {
+        pthread_join(takeOrderThread[i], NULL);
+        pthread_join(cupSizeThread[i], NULL);
+        pthread_join(flavourThread[i], NULL);
+        pthread_join(toppingThread[i], NULL);
+        pthread_join(showOrderThread[i], NULL);
+    }
+
+    pthread_mutex_destroy(&lock);
+
+    cout << "Ice Cream Factory has finished running." << endl;
+}
 
 #endif /* ICECREAMFACTORY_H */
