@@ -33,3 +33,7 @@
 
 # VS Code
 .vscode/
+
+# Project Specific
+run/*
+src/*
