@@ -20,7 +20,7 @@ struct Visualizer
     {
         window = new RenderWindow(
             VideoMode(1600, 900),
-            "Data Structure Visualizer",
+            "Ice Cream Factory",
             Style::Titlebar | Style::Close);
 
         image.loadFromFile("assets/images/background.jpg");
@@ -72,6 +72,7 @@ struct Visualizer
 
     void setup()
     {
+        
         pthread_t threads[6];
         pthread_create(threads + 0, NULL, handler1, factory);
         pthread_create(threads + 1, NULL, handler2, factory);
@@ -79,6 +80,10 @@ struct Visualizer
         pthread_create(threads + 3, NULL, handler4, factory);
         pthread_create(threads + 4, NULL, handler5, factory);
         pthread_create(threads + 5, NULL, assignee, factory);
+        for(int i=0;i<4;i++){
+         sem_init(&counter_sem[i], 0, 1);
+        }
+        sem_init(&mutex, 0, 1); 
     }
 
     void run()

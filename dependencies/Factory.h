@@ -1,5 +1,7 @@
 #include <queue>
 #include <iostream>
+#include <semaphore.h>
+
 using namespace std;
 
 #include "AssemblyLine.h"
@@ -8,6 +10,9 @@ using namespace std;
 #define FACTORY
 
 int counter = 1;
+sem_t mutex;
+sem_t counter_sem[5];
+
 
 struct choices
 {
@@ -76,8 +81,12 @@ void *assignee(void *arg)
 
     while (true)
     {
+        sem_wait(&mutex);
         while (factory->waitingQueue.empty())
-            ;
+        {
+           
+            
+        }
 
         IceCream *current = factory->waitingQueue.front();
 
@@ -94,6 +103,7 @@ void *assignee(void *arg)
         }
 
         factory->waitingQueue.pop();
+        sem_post(&mutex);
     }
 
     return NULL;
@@ -105,8 +115,11 @@ void *handler1(void *arg)
 
     while (true)
     {
+        sem_wait(&counter_sem[0]);
+
         while (factory->counter1.empty())
-            ;
+         sem_post(&counter_sem[0]);
+            ; 
 
         IceCream *current = factory->counter1.front();
 
@@ -117,6 +130,10 @@ void *handler1(void *arg)
         factory->counter2.push(current);
         current->counter1 = true;
         factory->counter1.pop();
+
+        sem_post(&counter_sem[1]);
+         sem_post(&counter_sem[0]);
+
     }
 
     return NULL;
@@ -128,8 +145,12 @@ void *handler2(void *arg)
 
     while (true)
     {
-        while (factory->counter2.empty())
-            ;
+        sem_wait(&counter_sem[1]);
+
+       while (factory->counter2.empty())
+        sem_post(&counter_sem[1]);
+
+            ; 
 
         IceCream *current = factory->counter2.front();
 
@@ -140,6 +161,10 @@ void *handler2(void *arg)
         factory->counter3.push(current);
         current->counter2 = true;
         factory->counter2.pop();
+
+        sem_post(&counter_sem[2]);
+        sem_post(&counter_sem[1]);
+
     }
 
     return NULL;
@@ -151,8 +176,12 @@ void *handler3(void *arg)
 
     while (true)
     {
+        sem_wait(&counter_sem[2]);
+
         while (factory->counter3.empty())
-            ;
+        sem_post(&counter_sem[2]);
+
+            
 
         IceCream *current = factory->counter3.front();
 
@@ -163,6 +192,10 @@ void *handler3(void *arg)
         factory->counter4.push(current);
         current->counter3 = true;
         factory->counter3.pop();
+
+        sem_post(&counter_sem[3]);
+        sem_post(&counter_sem[2]);
+
     }
 
     return NULL;
@@ -174,8 +207,11 @@ void *handler4(void *arg)
 
     while (true)
     {
+        sem_wait(&counter_sem[3]);
+
         while (factory->counter4.empty())
-            ;
+        sem_post(&counter_sem[3]);
+           
 
         IceCream *current = factory->counter4.front();
 
@@ -186,6 +222,10 @@ void *handler4(void *arg)
         factory->counter5.push(current);
         current->counter4 = true;
         factory->counter4.pop();
+
+        sem_post(&counter_sem[4]);
+        sem_post(&counter_sem[3]);
+
     }
 
     return NULL;
@@ -197,8 +237,12 @@ void *handler5(void *arg)
 
     while (true)
     {
+        sem_wait(&counter_sem[4]);
+
         while (factory->counter5.empty())
-            ;
+        sem_post(&counter_sem[4]);
+
+     
 
         IceCream *current = factory->counter5.front();
 
@@ -209,11 +253,9 @@ void *handler5(void *arg)
 
         current->line->free = true;
         cout << "\nIce cream is ready! \n";
-        cout << current->description << endl;
-        usleep((rand() % 1000 + 500) * 1000);
+        sem_post(&counter_sem[4]);
     }
-
-    return NULL;
 }
+
 
 #endif
