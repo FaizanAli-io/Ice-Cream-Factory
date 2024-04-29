@@ -5,7 +5,7 @@ using namespace std;
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 using namespace sf;
-
+#include "Visualizer.h"
 #ifndef MENU
 #define MENU
 
@@ -14,67 +14,103 @@ struct Menu
     RectangleShape menu;
     RenderWindow *window;
 
-    Texture cone_t;
-    Sprite cone_s[3];
+    Texture image;
+    Music music;
+    
+   Font font;
+    Sprite background;
+    
+    Text selectedOption;
+    bool multiThreadedSelected = false;
 
     Menu()
-    {
-        window = new RenderWindow(VideoMode(1600, 900), "Data Structure Visualizer", Style::Titlebar | Style::Close);
+    {   
+        image.loadFromFile("assets/images/back.jpg");
+        background.setTexture(image);
+        font.loadFromFile("assets/fonts/font2.ttf");
+        window=new  RenderWindow(sf::VideoMode(1600, 900), "Menu");
+        music.openFromFile("assets/sounds/gottrim.wav");
     
-        // cone_t.loadFromFile("assets/images/cone.png");
-
-        for (int i = 0; i < 3; i++)
-            cone_s[i].setTexture(cone_t);
-
-        cone_s[0].setScale(0.2, 0.2);
-        cone_s[1].setScale(0.25, 0.25);
-        cone_s[2].setScale(0.3, 0.3);
-
-        cone_s[0].setPosition(448.8, 398.8);
-        cone_s[1].setPosition(736, 386);
-        cone_s[2].setPosition(1023.2, 373.2);
-        cone_s[1].setColor(Color::Red);
-        cone_s[2].setColor(Color::Blue);
-        
-
-        float w = window->getSize().x;
-        int h = window->getSize().y;
-
-        menu.setSize(Vector2f(w, h));
-        menu.setFillColor(Color(100, 100,  100));
-        
-
-        
-    }
+    
+ }
 
     void draw()
     {
-        window->clear();
-        window->draw(menu);
-        window->draw(cone_s[0]);
-        window->draw(cone_s[1]);
-        window->draw(cone_s[2]);
-         Event event;
-    while (window->pollEvent(event))
-    {
-        if (event.type == Event::MouseButtonPressed)
-        {
-            
-            Vector2f mousePos = window->mapPixelToCoords(Mouse::getPosition(*window));
+        music.setLoop(true);
+        music.play();
+        music.setPitch(1.3);
 
-            
-            for (int i = 0; i < 3; i++)
+        sf::Text multiThreadedText("Multi Threaded", font, 60);
+        multiThreadedText.setPosition(350, 200);
+        multiThreadedText.setFillColor(sf::Color::White);
+
+        Text singleThreadedText("Single Threaded", font,60);
+        singleThreadedText.setPosition(350, 350);
+        singleThreadedText.setFillColor(sf::Color::White);
+
+        Text selectedOption;
+        bool multiThreadedSelected = false;
+        while (window->isOpen())
+        {
+           
+            sf::Event event;
+            while (window->pollEvent(event))
             {
-                if (cone_s[i].getGlobalBounds().contains(mousePos))
+                if (event.type == sf::Event::Closed)
+                    window->close();
+                else if (event.type == sf::Event::MouseButtonPressed)
                 {
-                    
-                    cone_s[i].setColor(Color::Red); 
+                    sf::FloatRect multiThreadedBounds = multiThreadedText.getGlobalBounds();
+                    FloatRect singleThreadedBounds = singleThreadedText.getGlobalBounds();
+
+                    if (multiThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
+                    {
+                        multiThreadedSelected = true;
+                        selectedOption = multiThreadedText;
+                        Visualizer viz;
+                        viz.setup();//mutithreaded
+                        viz.run();
+                    }
+                    else if (singleThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
+                    {
+                        multiThreadedSelected = false;
+                        selectedOption = singleThreadedText;
+                        Visualizer viz;
+                        viz.run();//single threaded
+                    }
+                }
+               else if (event.type == sf::Event::MouseMoved)
+                {
+                    sf::FloatRect multiThreadedBounds = multiThreadedText.getGlobalBounds();
+                    sf::FloatRect singleThreadedBounds = singleThreadedText.getGlobalBounds();
+
+                    if (multiThreadedBounds.contains(event.mouseMove.x, event.mouseMove.y))
+                    {
+                        multiThreadedText.setFillColor(sf::Color::Yellow);
+                        window->draw(multiThreadedText);
+                    }
+                    else if (singleThreadedBounds.contains(event.mouseMove.x, event.mouseMove.y))
+                    {
+                        singleThreadedText.setFillColor(sf::Color::Yellow);
+                        window->draw(singleThreadedText);
+                    }
+                    else
+                    {
+                        multiThreadedText.setFillColor(sf::Color::White);
+                        singleThreadedText.setFillColor(sf::Color::White);
+                        window->draw(multiThreadedText);
+                        window->draw(singleThreadedText);
+                    }
                 }
             }
-        }
-    }
+            window->clear();
+            window->draw(background);
 
-        window->display();
+            window->draw(multiThreadedText);
+            window->draw(singleThreadedText);
+            window->display();
+        }
+
     }
 };
 #endif

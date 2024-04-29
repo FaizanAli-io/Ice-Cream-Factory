@@ -1,5 +1,6 @@
-#include "Menu.h"
-
+#include <SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
+using namespace sf;
 #include <unistd.h>
 
 #ifndef ASSEMBLYLINE
