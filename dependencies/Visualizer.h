@@ -1,5 +1,3 @@
-#include <pthread.h>
-
 #include "Factory.h"
 
 #ifndef VISUALIZER
@@ -16,14 +14,9 @@ struct Visualizer
     vector<string> counters;
     RectangleShape newOrder;
 
-    Visualizer()
+    Visualizer(RenderWindow *window)
     {
-        window = new RenderWindow(
-            VideoMode(1600, 900),
-            "Ice Cream Factory",
-            Style::Titlebar | Style::Close);
-
-        image.loadFromFile("assets/images/background.jpg");
+        image.loadFromFile("assets/images/back.jpg");
         font.loadFromFile("assets/fonts/font2.ttf");
         background.setTexture(image);
 
@@ -72,7 +65,9 @@ struct Visualizer
 
     void setup()
     {
-        
+        // for (int i = 0; i < 4; i++)
+        //     sem_init(&semaphores[i], 0, 1);
+
         pthread_t threads[6];
         pthread_create(threads + 0, NULL, handler1, factory);
         pthread_create(threads + 1, NULL, handler2, factory);
@@ -80,13 +75,9 @@ struct Visualizer
         pthread_create(threads + 3, NULL, handler4, factory);
         pthread_create(threads + 4, NULL, handler5, factory);
         pthread_create(threads + 5, NULL, assignee, factory);
-        for(int i=0;i<4;i++){
-         sem_init(&counter_sem[i], 0, 1);
-        }
-        sem_init(&mutex, 0, 1); 
     }
 
-    void run()
+    void run(bool x)
     {
         srand(time(0));
 
@@ -101,7 +92,9 @@ struct Visualizer
                 if (event.type == Event::MouseButtonPressed)
                 {
                     Vector2f mouse = window->mapPixelToCoords(Mouse::getPosition(*window));
+
                     FloatRect bounds = newOrder.getGlobalBounds();
+
                     if (bounds.contains(mouse))
                         factory->waitingQueue.push(new IceCream());
                 }
