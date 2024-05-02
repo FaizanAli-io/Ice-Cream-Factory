@@ -1,10 +1,4 @@
-#include <vector>
-#include <iostream>
-using namespace std;
-
-#include <SFML/Audio.hpp>
-#include <SFML/Graphics.hpp>
-using namespace sf;
+#include "Visualizer.h"
 
 #ifndef MENU
 #define MENU
@@ -12,38 +6,95 @@ using namespace sf;
 struct Menu
 {
     RectangleShape menu;
+    RenderWindow *window;
 
-    Texture cone_t;
-    Sprite cone_s[3];
+    Font font;
+    Music music;
+    Texture image;
+    Sprite background;
 
     Menu()
     {
-        cone_t.loadFromFile("assets/images/cone.png");
+        font.loadFromFile("assets/fonts/font2.ttf");
+        image.loadFromFile("assets/images/back.jpg");
+        music.openFromFile("assets/sounds/gottrim.wav");
 
-        for (int i = 0; i < 3; i++)
-            cone_s[i].setTexture(cone_t);
+        background.setTexture(image);
 
-        cone_s[0].setScale(0.2, 0.2);
-        cone_s[1].setScale(0.25, 0.25);
-        cone_s[2].setScale(0.3, 0.3);
-
-        cone_s[0].setPosition(448.8, 398.8);
-        cone_s[1].setPosition(736, 386);
-        cone_s[2].setPosition(1023.2, 373.2);
-
-        menu.setOutlineThickness(-4.f);
-        menu.setFillColor(Color::White);
-        menu.setSize(Vector2f(900, 300));
-        menu.setOutlineColor(Color::Black);
-        menu.setPosition(Vector2f(350, 300));
+        window = new RenderWindow(
+            VideoMode(1600, 900),
+            "Ice Cream Factory",
+            Style::Titlebar | Style::Close);
     }
 
-    void draw(RenderWindow *window)
+    void draw()
     {
-        window->draw(menu);
-        window->draw(cone_s[0]);
-        window->draw(cone_s[1]);
-        window->draw(cone_s[2]);
+        music.setLoop(true);
+        music.play();
+        music.setPitch(1.3);
+
+        Visualizer visualizer(window);
+
+        Text multiThreadedText("Multi Threaded", font, 60);
+        multiThreadedText.setPosition(350, 200);
+        multiThreadedText.setFillColor(Color::White);
+
+        Text singleThreadedText("Single Threaded", font, 60);
+        singleThreadedText.setPosition(350, 350);
+        singleThreadedText.setFillColor(Color::White);
+
+        while (window->isOpen())
+        {
+            Event event;
+            while (window->pollEvent(event))
+            {
+                FloatRect multiThreadedBounds = multiThreadedText.getGlobalBounds();
+                FloatRect singleThreadedBounds = singleThreadedText.getGlobalBounds();
+
+                if (event.type == Event::Closed)
+                    window->close();
+
+                else if (event.type == Event::MouseButtonPressed)
+                {
+
+                    if (multiThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
+                    {
+                        visualizer.setup(2);
+                        visualizer.run();
+                    }
+
+                    else if (singleThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
+                    {
+                        visualizer.setup(1);
+                        visualizer.run();
+                    }
+                }
+
+                else if (event.type == Event::MouseMoved)
+                {
+
+                    if (multiThreadedBounds.contains(event.mouseMove.x, event.mouseMove.y))
+                        multiThreadedText.setFillColor(Color::Yellow);
+
+                    else if (singleThreadedBounds.contains(event.mouseMove.x, event.mouseMove.y))
+                        singleThreadedText.setFillColor(Color::Yellow);
+
+                    else
+                    {
+                        multiThreadedText.setFillColor(Color::White);
+                        singleThreadedText.setFillColor(Color::White);
+                    }
+                }
+            }
+
+            window->clear();
+            window->draw(background);
+
+            window->draw(multiThreadedText);
+            window->draw(singleThreadedText);
+
+            window->display();
+        }
     }
 };
 

@@ -1,8 +1,7 @@
-#include "dependencies/Visualizer.h"
+#include "dependencies/Menu.h"
 
 int main()
 {
-    Visualizer viz;
-    viz.setup();
-    viz.run();
+    Menu menu;
+    menu.draw();
 }

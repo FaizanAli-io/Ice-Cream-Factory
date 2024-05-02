@@ -1,6 +1,15 @@
-#include "Menu.h"
-
 #include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+#include <queue>
+#include <vector>
+#include <iostream>
+using namespace std;
+
+#include <SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
+using namespace sf;
 
 #ifndef ASSEMBLYLINE
 #define ASSEMBLYLINE

@@ -1,5 +1,3 @@
-#include <pthread.h>
-
 #include "Factory.h"
 
 #ifndef VISUALIZER
@@ -16,14 +14,9 @@ struct Visualizer
     vector<string> counters;
     RectangleShape newOrder;
 
-    Visualizer()
+    Visualizer(RenderWindow *window) : window(window)
     {
-        window = new RenderWindow(
-            VideoMode(1600, 900),
-            "Data Structure Visualizer",
-            Style::Titlebar | Style::Close);
-
-        image.loadFromFile("assets/images/background.jpg");
+        image.loadFromFile("assets/images/back.jpg");
         font.loadFromFile("assets/fonts/font2.ttf");
         background.setTexture(image);
 
@@ -70,15 +63,41 @@ struct Visualizer
         newOrder.setPosition(Vector2f(1300, 670));
     }
 
-    void setup()
+    void setup(int multi)
     {
-        pthread_t threads[6];
-        pthread_create(threads + 0, NULL, handler1, factory);
-        pthread_create(threads + 1, NULL, handler2, factory);
-        pthread_create(threads + 2, NULL, handler3, factory);
-        pthread_create(threads + 3, NULL, handler4, factory);
-        pthread_create(threads + 4, NULL, handler5, factory);
-        pthread_create(threads + 5, NULL, assignee, factory);
+        for (int i = 0; i < 5; i++)
+            sem_init(&semaphores[i], 0, 1);
+
+        if (multi > 1)
+        {
+            pthread_t assigner;
+            pthread_t handlers[5][multi];
+
+            for (int i = 0; i < multi; i++)
+            {
+                pthread_create(&handlers[0][i], NULL, handler1, factory);
+                pthread_create(&handlers[1][i], NULL, handler2, factory);
+                pthread_create(&handlers[2][i], NULL, handler3, factory);
+                pthread_create(&handlers[3][i], NULL, handler4, factory);
+                pthread_create(&handlers[4][i], NULL, handler5, factory);
+            }
+
+            pthread_create(&assigner, NULL, assignee, factory);
+        }
+
+        else
+        {
+            pthread_t threads[6];
+            pthread_create(&threads[0], NULL, handler1, factory);
+            pthread_create(&threads[1], NULL, handler2, factory);
+            pthread_create(&threads[2], NULL, handler3, factory);
+            pthread_create(&threads[3], NULL, handler4, factory);
+            pthread_create(&threads[4], NULL, handler5, factory);
+            pthread_create(&threads[5], NULL, assignee, factory);
+        }
+
+        for (int i = 0; i < 5; i++)
+            sem_destroy(&semaphores[i]);
     }
 
     void run()
@@ -96,7 +115,9 @@ struct Visualizer
                 if (event.type == Event::MouseButtonPressed)
                 {
                     Vector2f mouse = window->mapPixelToCoords(Mouse::getPosition(*window));
+
                     FloatRect bounds = newOrder.getGlobalBounds();
+
                     if (bounds.contains(mouse))
                         factory->waitingQueue.push(new IceCream());
                 }
