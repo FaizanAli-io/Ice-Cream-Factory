@@ -1,7 +1,15 @@
+#include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+#include <queue>
+#include <vector>
+#include <iostream>
+using namespace std;
+
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 using namespace sf;
-#include <unistd.h>
 
 #ifndef ASSEMBLYLINE
 #define ASSEMBLYLINE
