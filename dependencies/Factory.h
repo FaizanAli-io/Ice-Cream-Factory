@@ -4,7 +4,7 @@
 #define FACTORY
 
 int counter = 1;
-// sem_t semaphores[5];
+sem_t semaphores[5];
 
 int get_random_time() { return (rand() % 1000 + 500) * 1000; }
 
@@ -114,9 +114,13 @@ void *handler1(void *arg)
         usleep(get_random_time());
         current->line->progress();
 
+        sem_wait(&semaphores[0]);
+
         factory->counter2.push(current);
         current->counter1 = true;
         factory->counter1.pop();
+
+        sem_post(&semaphores[0]);
     }
 
     return NULL;
@@ -137,9 +141,13 @@ void *handler2(void *arg)
         usleep(get_random_time());
         current->line->progress();
 
+        sem_wait(&semaphores[1]);
+
         factory->counter3.push(current);
         current->counter2 = true;
         factory->counter2.pop();
+
+        sem_post(&semaphores[1]);
     }
 
     return NULL;
@@ -161,9 +169,13 @@ void *handler3(void *arg)
         usleep(get_random_time());
         current->line->progress();
 
+        sem_wait(&semaphores[2]);
+
         factory->counter4.push(current);
         current->counter3 = true;
         factory->counter3.pop();
+
+        sem_post(&semaphores[2]);
     }
 
     return NULL;
@@ -184,9 +196,13 @@ void *handler4(void *arg)
         usleep(get_random_time());
         current->line->progress();
 
+        sem_wait(&semaphores[3]);
+
         factory->counter5.push(current);
         current->counter4 = true;
         factory->counter4.pop();
+
+        sem_post(&semaphores[3]);
     }
 
     return NULL;
@@ -203,10 +219,14 @@ void *handler5(void *arg)
 
         IceCream *current = factory->counter5.front();
 
+        sem_wait(&semaphores[4]);
+
         current->counter5 = true;
         factory->counter5.pop();
         current->line->reset();
         factory->finished++;
+
+        sem_post(&semaphores[4]);
 
         current->line->free = true;
         cout << "\nIce cream is ready! \n";

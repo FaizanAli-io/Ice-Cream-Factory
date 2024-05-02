@@ -33,6 +33,8 @@ struct Menu
         music.play();
         music.setPitch(1.3);
 
+        Visualizer visualizer(window);
+
         Text multiThreadedText("Multi Threaded", font, 60);
         multiThreadedText.setPosition(350, 200);
         multiThreadedText.setFillColor(Color::White);
@@ -40,8 +42,6 @@ struct Menu
         Text singleThreadedText("Single Threaded", font, 60);
         singleThreadedText.setPosition(350, 350);
         singleThreadedText.setFillColor(Color::White);
-
-        Visualizer visualizer(window);
 
         while (window->isOpen())
         {
@@ -58,10 +58,16 @@ struct Menu
                 {
 
                     if (multiThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
-                        visualizer.run(true);
+                    {
+                        visualizer.setup(2);
+                        visualizer.run();
+                    }
 
                     else if (singleThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
-                        visualizer.run(false);
+                    {
+                        visualizer.setup(1);
+                        visualizer.run();
+                    }
                 }
 
                 else if (event.type == Event::MouseMoved)
