@@ -4,6 +4,7 @@
 #define FACTORY
 
 int counter = 1;
+sem_t counting[5];
 sem_t semaphores[5];
 
 int get_random_time() { return (rand() % 1000 + 500) * 1000; }
@@ -60,6 +61,7 @@ struct Factory
         cream->line = line;
         line->free = false;
         counter1.push(cream);
+        sem_post(&counting[0]);
     }
 
     void show()
@@ -104,9 +106,7 @@ void *handler1(void *arg)
 
     while (true)
     {
-
-        while (factory->counter1.empty())
-            ;
+        sem_wait(&counting[0]);
 
         IceCream *current = factory->counter1.front();
 
@@ -121,6 +121,8 @@ void *handler1(void *arg)
         factory->counter1.pop();
 
         sem_post(&semaphores[0]);
+
+        sem_post(&counting[1]);
     }
 
     return NULL;
@@ -132,8 +134,7 @@ void *handler2(void *arg)
 
     while (true)
     {
-        while (factory->counter2.empty())
-            ;
+        sem_wait(&counting[1]);
 
         IceCream *current = factory->counter2.front();
 
@@ -148,6 +149,8 @@ void *handler2(void *arg)
         factory->counter2.pop();
 
         sem_post(&semaphores[1]);
+
+        sem_post(&counting[2]);
     }
 
     return NULL;
@@ -160,8 +163,7 @@ void *handler3(void *arg)
     while (true)
     {
 
-        while (factory->counter3.empty())
-            ;
+        sem_wait(&counting[2]);
 
         IceCream *current = factory->counter3.front();
 
@@ -176,6 +178,8 @@ void *handler3(void *arg)
         factory->counter3.pop();
 
         sem_post(&semaphores[2]);
+
+        sem_post(&counting[3]);
     }
 
     return NULL;
@@ -187,8 +191,7 @@ void *handler4(void *arg)
 
     while (true)
     {
-        while (factory->counter4.empty())
-            ;
+        sem_wait(&counting[3]);
 
         IceCream *current = factory->counter4.front();
 
@@ -203,6 +206,8 @@ void *handler4(void *arg)
         factory->counter4.pop();
 
         sem_post(&semaphores[3]);
+
+        sem_post(&counting[4]);
     }
 
     return NULL;
@@ -214,8 +219,7 @@ void *handler5(void *arg)
 
     while (true)
     {
-        while (factory->counter5.empty())
-            ;
+        sem_wait(&counting[4]);
 
         IceCream *current = factory->counter5.front();
 

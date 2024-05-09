@@ -1,4 +1,4 @@
 all:
 	g++ -Isrc/include -c main.cpp -o run/main.o
-	g++ run/main.o -o run/main -Lsrc/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+	g++ run/main.o -o run/main -Lsrc/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -lpthread
 	./run/main.exe

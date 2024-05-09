@@ -35,13 +35,17 @@ struct Menu
 
         Visualizer visualizer(window);
 
-        Text multiThreadedText("Multi Threaded", font, 60);
-        multiThreadedText.setPosition(350, 200);
-        multiThreadedText.setFillColor(Color::White);
+        Text heading("ICE CREAM FACTORY", font, 80);
+        heading.setPosition(350, 100);
+        heading.setFillColor(Color::Yellow);
 
         Text singleThreadedText("Single Threaded", font, 60);
-        singleThreadedText.setPosition(350, 350);
+        singleThreadedText.setPosition(350, 250);
         singleThreadedText.setFillColor(Color::White);
+
+        Text multiThreadedText("Multi Threaded", font, 60);
+        multiThreadedText.setPosition(350, 400);
+        multiThreadedText.setFillColor(Color::White);
 
         while (window->isOpen())
         {
@@ -57,15 +61,15 @@ struct Menu
                 else if (event.type == Event::MouseButtonPressed)
                 {
 
-                    if (multiThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
+                    if (singleThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
                     {
-                        visualizer.setup(2);
+                        visualizer.setup(1);
                         visualizer.run();
                     }
 
-                    else if (singleThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
+                    else if (multiThreadedBounds.contains(event.mouseButton.x, event.mouseButton.y))
                     {
-                        visualizer.setup(1);
+                        visualizer.setup(2);
                         visualizer.run();
                     }
                 }
@@ -90,6 +94,7 @@ struct Menu
             window->clear();
             window->draw(background);
 
+            window->draw(heading);
             window->draw(multiThreadedText);
             window->draw(singleThreadedText);
 

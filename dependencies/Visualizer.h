@@ -66,7 +66,10 @@ struct Visualizer
     void setup(int multi)
     {
         for (int i = 0; i < 5; i++)
+        {
             sem_init(&semaphores[i], 0, 1);
+            sem_init(&counting[i], 0, 0);
+        }
 
         if (multi > 1)
         {
@@ -95,9 +98,6 @@ struct Visualizer
             pthread_create(&threads[4], NULL, handler5, factory);
             pthread_create(&threads[5], NULL, assignee, factory);
         }
-
-        for (int i = 0; i < 5; i++)
-            sem_destroy(&semaphores[i]);
     }
 
     void run()
